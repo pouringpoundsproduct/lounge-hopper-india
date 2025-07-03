@@ -159,6 +159,12 @@ export const useLoungeFinder = () => {
 
     console.log('Searching with:', { cardName, city, network });
     console.log('Total lounges available:', lounges.length);
+    
+    // Debug: Check first few lounges and their eligible cards
+    if (cardName && lounges.length > 0) {
+      console.log('Sample lounge eligible cards:', lounges[0].eligibleCards);
+      console.log('Looking for card:', cardName);
+    }
 
     if (cardName || city || network) {
       results = lounges.filter(lounge => {
