@@ -51,60 +51,48 @@ export const useLoungeFinder = () => {
       
       console.log('Starting data fetch...');
       
-      // Fetch lounges with properly quoted column names
+      // Fetch lounges - using exact column names from database
       const { data: loungesData, error: loungesError } = await supabase
         .from('LoungesDB')
-        .select(`
-          Lounge_Id,
-          "Lounge Name",
-          "Airport Name",
-          City,
-          State,
-          "Location (Terminal, Concourse, Gate, Floor)",
-          "Opening Hours",
-          "Guest Policy",
-          "Paid Access Fee",
-          "User Ratings",
-          "Lounge Photos"
-        `);
+        .select('*');
 
       if (loungesError) {
         console.error('Lounges fetch error:', loungesError);
         throw loungesError;
       }
 
-      console.log('Lounges data fetched:', loungesData?.length || 0, 'records');
+      console.log('Raw lounges data:', loungesData);
 
       // Fetch cards
       const { data: cardsData, error: cardsError } = await supabase
         .from('cards')
-        .select('Card_ID, Card_Name, CG_Name');
+        .select('*');
 
       if (cardsError) {
         console.error('Cards fetch error:', cardsError);
         throw cardsError;
       }
 
-      console.log('Cards data fetched:', cardsData?.length || 0, 'records');
+      console.log('Raw cards data:', cardsData);
 
       // Fetch card-lounge relationships
       const { data: cardLoungeData, error: cardLoungeError } = await supabase
         .from('cards_lounge')
-        .select('card_id, lounge_id, card_name, network');
+        .select('*');
 
       if (cardLoungeError) {
         console.error('Card-lounge relationship fetch error:', cardLoungeError);
         throw cardLoungeError;
       }
 
-      console.log('Card-lounge relationships fetched:', cardLoungeData?.length || 0, 'records');
+      console.log('Raw card-lounge data:', cardLoungeData);
 
-      // Transform and combine data
+      // Transform lounges data
       const transformedLounges: Lounge[] = loungesData?.map((lounge: any) => {
         const loungeRelations = cardLoungeData?.filter((cl: any) => cl.lounge_id === lounge.Lounge_Id) || [];
         
-        const eligibleCards = loungeRelations.map((cl: any) => cl.card_name || 'Unknown Card');
-        const networks = [...new Set(loungeRelations.map((cl: any) => cl.network).filter(Boolean))];
+        const eligibleCards = loungeRelations.map((rel: any) => rel.card_name || 'Unknown Card');
+        const networks = [...new Set(loungeRelations.map((rel: any) => rel.network).filter(Boolean))];
 
         return {
           id: lounge.Lounge_Id,
@@ -125,16 +113,17 @@ export const useLoungeFinder = () => {
         };
       }) || [];
 
+      // Transform cards data
       const transformedCards: CreditCard[] = cardsData?.map((card: any) => ({
-        id: card.Card_ID,
+        id: card.Card_ID || card.id,
         name: card.Card_Name || 'Unknown Card',
         network: card.CG_Name
       })) || [];
 
-      // Extract unique cities
+      // Extract unique cities from lounges
       const uniqueCities = [...new Set(transformedLounges.map(lounge => lounge.city).filter(Boolean))].sort();
       
-      // Extract unique networks with card counts
+      // Extract unique networks from card-lounge relationships (independent of card selection)
       const networkCounts = cardLoungeData?.reduce((acc: any, relation: any) => {
         if (relation.network) {
           acc[relation.network] = (acc[relation.network] || 0) + 1;
@@ -147,11 +136,11 @@ export const useLoungeFinder = () => {
         cardCount: count as number
       })).sort((a, b) => a.name.localeCompare(b.name));
 
-      console.log('Data transformation complete');
-      console.log('Transformed lounges:', transformedLounges.length);
-      console.log('Transformed cards:', transformedCards.length);
-      console.log('Unique cities:', uniqueCities.length);
-      console.log('Unique networks:', uniqueNetworks.length);
+      console.log('Final transformed data:');
+      console.log('- Lounges:', transformedLounges.length);
+      console.log('- Cards:', transformedCards.length);
+      console.log('- Cities:', uniqueCities.length);
+      console.log('- Networks:', uniqueNetworks.length);
 
       setLounges(transformedLounges);
       setCards(transformedCards);

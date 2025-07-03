@@ -58,7 +58,7 @@ const Index = () => {
 
   const networkOptions = networks.map(network => ({
     value: network.name,
-    label: `${network.name} (${network.cardCount} cards)`
+    label: network.name
   }));
 
   if (loading) {
@@ -67,6 +67,7 @@ const Index = () => {
         <div className="text-center">
           <Plane className="w-12 h-12 text-blue-600 animate-bounce mx-auto mb-4" />
           <p className="text-xl text-gray-600">Loading lounge data...</p>
+          <p className="text-sm text-gray-500 mt-2">Fetching lounges, cards, and networks...</p>
         </div>
       </div>
     );
@@ -106,7 +107,6 @@ const Index = () => {
         <div className="absolute top-40 right-20 w-32 h-32 bg-amber-100 rounded-full opacity-30 animate-bounce" style={{ animationDelay: '1s' }}></div>
         <div className="absolute bottom-32 left-1/4 w-48 h-48 bg-blue-50 rounded-full opacity-25 animate-pulse" style={{ animationDelay: '2s' }}></div>
         
-        {/* Floating Plane Animation */}
         <div className="absolute top-1/3 left-0 w-full h-full pointer-events-none">
           <div className="relative w-full h-full">
             <Plane className="absolute w-8 h-8 text-blue-400 opacity-60 animate-bounce" 
@@ -171,7 +171,7 @@ const Index = () => {
                   </label>
                   <SearchableDropdown
                     options={cardOptions}
-                    placeholder="Select or search your credit card"
+                    placeholder={loading ? "Loading cards..." : "Select or search your credit card"}
                     value={selectedCard}
                     onChange={setSelectedCard}
                     icon={<CreditCard className="w-5 h-5" />}
@@ -187,7 +187,7 @@ const Index = () => {
                   </label>
                   <SearchableDropdown
                     options={cityOptions}
-                    placeholder="Select city"
+                    placeholder={loading ? "Loading cities..." : "Select city"}
                     value={selectedCity}
                     onChange={setSelectedCity}
                     icon={<MapPin className="w-5 h-5" />}
@@ -203,12 +203,12 @@ const Index = () => {
                   </label>
                   <SearchableDropdown
                     options={networkOptions}
-                    placeholder="Select network"
+                    placeholder={loading ? "Loading networks..." : "Select network (Visa, Mastercard, etc.)"}
                     value={selectedNetwork}
                     onChange={setSelectedNetwork}
                     icon={<NetworkIcon className="w-5 h-5" />}
                   />
-                  <p className="text-sm text-gray-500">Optional - Filter by Visa, Mastercard, etc.</p>
+                  <p className="text-sm text-gray-500">Optional - Filter by card network type</p>
                 </div>
               </div>
 
