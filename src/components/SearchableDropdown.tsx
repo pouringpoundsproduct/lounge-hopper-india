@@ -82,8 +82,8 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   };
 
   return (
-    <div ref={dropdownRef} className={`relative ${className}`}>
-      <div className="relative">
+    <div ref={dropdownRef} className={`relative w-full ${className}`}>
+      <div className="relative w-full">
         <Input
           ref={inputRef}
           type="text"
@@ -92,13 +92,13 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onKeyDown={handleKeyDown}
-          className="pl-12 pr-10 py-5 text-lg border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 hover:border-gray-300 shadow-sm hover:shadow-md bg-white/90 backdrop-blur-sm"
+          className="w-full pl-12 pr-10 py-5 text-base lg:text-lg border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300 hover:border-gray-300 shadow-sm hover:shadow-lg bg-white backdrop-blur-sm font-medium"
         />
-        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 flex-shrink-0">
           {icon || <Search className="w-5 h-5" />}
         </div>
         <ChevronDown 
-          className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 transition-transform ${
+          className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />

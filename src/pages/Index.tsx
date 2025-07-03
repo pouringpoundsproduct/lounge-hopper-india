@@ -175,50 +175,54 @@ const Index = () => {
 
               {/* Main Search Questions */}
               <div className="space-y-8">
-                {/* Primary Questions - Side by Side on Desktop, Stacked on Mobile */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                {/* Primary Questions - Responsive Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                   {/* Credit Card Question */}
-                  <div className="space-y-4 animate-fade-in">
-                    <div className="text-center md:text-left">
-                      <label className="flex items-center justify-center md:justify-start text-lg md:text-xl font-bold text-gray-900 mb-2">
-                        <CreditCard className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 text-blue-600" />
-                        Which credit card do you have?
+                  <div className="w-full space-y-4 animate-fade-in">
+                    <div className="text-left">
+                      <label className="flex items-start text-lg font-bold text-gray-900 mb-3">
+                        <CreditCard className="w-6 h-6 mr-3 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <span>Which credit card do you have?</span>
                       </label>
-                      <div className="flex items-center justify-center md:justify-start text-sm text-gray-600 mb-4">
+                      <div className="flex items-start text-sm text-gray-600 mb-4 ml-9">
                         <span className="mr-2">💡</span>
                         <span>Select your credit card to see eligible lounges</span>
                       </div>
                     </div>
-                    <SearchableDropdown
-                      options={cardOptions}
-                      placeholder={loading ? "Loading cards..." : "Search your credit card"}
-                      value={selectedCard}
-                      onChange={setSelectedCard}
-                      icon={<CreditCard className="w-5 h-5" />}
-                      className="transform transition-all duration-300 hover:scale-105"
-                    />
+                    <div className="w-full">
+                      <SearchableDropdown
+                        options={cardOptions}
+                        placeholder={loading ? "Loading cards..." : "Search your credit card"}
+                        value={selectedCard}
+                        onChange={setSelectedCard}
+                        icon={<CreditCard className="w-5 h-5" />}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
 
                   {/* City Question */}
-                  <div className="space-y-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                    <div className="text-center md:text-left">
-                      <label className="flex items-center justify-center md:justify-start text-lg md:text-xl font-bold text-gray-900 mb-2">
-                        <MapPin className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 text-amber-600" />
-                        Where do you want to use the lounge?
+                  <div className="w-full space-y-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                    <div className="text-left">
+                      <label className="flex items-start text-lg font-bold text-gray-900 mb-3">
+                        <MapPin className="w-6 h-6 mr-3 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <span>Where do you want to use the lounge?</span>
                       </label>
-                      <div className="flex items-center justify-center md:justify-start text-sm text-gray-600 mb-4">
+                      <div className="flex items-start text-sm text-gray-600 mb-4 ml-9">
                         <span className="mr-2">💡</span>
                         <span>Choose a city to find lounges there</span>
                       </div>
                     </div>
-                    <SearchableDropdown
-                      options={cityOptions}
-                      placeholder={loading ? "Loading cities..." : "Search destination city"}
-                      value={selectedCity}
-                      onChange={setSelectedCity}
-                      icon={<MapPin className="w-5 h-5" />}
-                      className="transform transition-all duration-300 hover:scale-105"
-                    />
+                    <div className="w-full">
+                      <SearchableDropdown
+                        options={cityOptions}
+                        placeholder={loading ? "Loading cities..." : "Search destination city"}
+                        value={selectedCity}
+                        onChange={setSelectedCity}
+                        icon={<MapPin className="w-5 h-5" />}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -278,26 +282,30 @@ const Index = () => {
                 </div>
               )}
 
-              {/* Sticky Search Button with Travel Theme */}
-              <div className="relative">
+              {/* Conversion-Focused Search Button */}
+              <div className="relative mt-8">
                 <Button 
                   onClick={handleSearch}
                   disabled={!selectedCard && !selectedCity && !selectedNetwork}
-                  className="w-full py-6 text-xl font-bold bg-gradient-to-r from-blue-600 via-blue-700 to-amber-600 hover:from-blue-700 hover:via-blue-800 hover:to-amber-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100 relative overflow-hidden group"
+                  className="w-full py-6 text-xl font-bold bg-gradient-to-r from-green-500 via-blue-600 to-purple-600 hover:from-green-600 hover:via-blue-700 hover:to-purple-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100 relative overflow-hidden group border-0"
+                  size="lg"
                 >
                   {/* Animated Background */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-amber-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-purple-400 opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
                   
                   <div className="relative flex items-center justify-center">
-                    <Search className="w-6 h-6 mr-3 animate-pulse" />
-                    <span>Check Lounge Access</span>
-                    <ArrowRight className="w-6 h-6 ml-3 transform group-hover:translate-x-1 transition-transform duration-300" />
+                    <Search className="w-7 h-7 mr-3" />
+                    <span className="tracking-wide">Find My Lounges</span>
+                    <ArrowRight className="w-7 h-7 ml-3 transform group-hover:translate-x-1 transition-transform duration-300" />
                   </div>
                   
-                  {/* Travel-themed decorative elements */}
-                  <div className="absolute top-2 right-4 opacity-30">
-                    <Plane className="w-4 h-4 transform rotate-45 text-white" />
+                  {/* Conversion-focused decorative elements */}
+                  <div className="absolute top-2 right-4 opacity-40">
+                    <Plane className="w-5 h-5 transform rotate-45 text-white animate-pulse" />
                   </div>
+                  
+                  {/* Pulsing effect for conversion */}
+                  <div className="absolute inset-0 rounded-2xl animate-ping opacity-20 bg-gradient-to-r from-green-400 to-purple-400"></div>
                 </Button>
               </div>
 

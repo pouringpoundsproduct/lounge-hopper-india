@@ -132,19 +132,36 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                       : `Cards available for ${selectedNetwork} network:`
                     }
                   </h3>
-                  <div className="grid gap-3 max-w-md mx-auto">
+                  <div className="grid gap-4 max-w-2xl mx-auto">
                     {eligibleCards.slice(0, 5).map((cardName, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
-                        <span className="font-medium text-gray-800">{cardName}</span>
-                        <Badge variant="secondary" className="bg-green-100 text-green-700">
-                          Eligible
-                        </Badge>
+                      <div key={index} className="flex items-center justify-between p-4 bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded flex items-center justify-center">
+                            <CreditCard className="w-4 h-4 text-white" />
+                          </div>
+                          <span className="font-semibold text-gray-800">{cardName}</span>
+                        </div>
+                        <Button 
+                          className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold px-6 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-pulse"
+                          onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(cardName + ' credit card apply online')}`, '_blank')}
+                        >
+                          Apply Now
+                        </Button>
                       </div>
                     ))}
                     {eligibleCards.length > 5 && (
-                      <p className="text-sm text-gray-500">
-                        +{eligibleCards.length - 5} more cards available
-                      </p>
+                      <div className="text-center">
+                        <p className="text-sm text-gray-500 mb-3">
+                          +{eligibleCards.length - 5} more cards available
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                          onClick={() => {/* Show all cards logic */}}
+                        >
+                          View All Cards
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
