@@ -152,102 +152,152 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Enhanced Triple Search Section */}
-        <div className="max-w-5xl mx-auto">
-          <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-8">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Find Your Perfect Lounge</h2>
-                <p className="text-gray-600">Choose any combination of card, city, or network for precise results</p>
+        {/* Travel-Themed Hero Search Section */}
+        <div className="max-w-4xl mx-auto">
+          <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm overflow-hidden">
+            <CardContent className="p-8 md:p-12">
+              {/* Animated Hero Section */}
+              <div className="text-center mb-12">
+                <div className="relative mb-8">
+                  <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-600 to-amber-600 rounded-full mb-6 shadow-xl relative overflow-hidden">
+                    <Plane className="w-12 h-12 text-white animate-bounce" />
+                    {/* Animated flight path */}
+                    <div className="absolute inset-0 animate-ping opacity-30">
+                      <div className="w-full h-full border-2 border-white rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Find Your Perfect Lounge</h2>
+                <p className="text-lg text-gray-600 mb-8">Answer either or both questions to discover your lounge access</p>
               </div>
 
-              {/* Triple Search Inputs */}
-              <div className="grid md:grid-cols-3 gap-6 mb-8">
-                {/* Credit Card Input */}
-                <div className="space-y-3">
-                  <label className="flex items-center text-lg font-semibold text-gray-800">
-                    <CreditCard className="w-5 h-5 mr-2 text-blue-600" />
-                    Which credit card do you have?
-                  </label>
-                  <SearchableDropdown
-                    options={cardOptions}
-                    placeholder={loading ? "Loading cards..." : "Select or search your credit card"}
-                    value={selectedCard}
-                    onChange={setSelectedCard}
-                    icon={<CreditCard className="w-5 h-5" />}
-                  />
-                  <p className="text-sm text-gray-500">Optional - Find lounges for your specific card</p>
+              {/* Main Search Questions */}
+              <div className="space-y-8">
+                {/* Primary Questions - Side by Side on Desktop, Stacked on Mobile */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Credit Card Question */}
+                  <div className="space-y-4 animate-fade-in">
+                    <div className="text-center md:text-left">
+                      <label className="flex items-center justify-center md:justify-start text-xl font-bold text-gray-900 mb-2">
+                        <CreditCard className="w-6 h-6 mr-3 text-blue-600" />
+                        Which credit card do you have?
+                      </label>
+                      <div className="flex items-center justify-center md:justify-start text-sm text-gray-600 mb-4">
+                        <span className="mr-2">💡</span>
+                        <span>Select your credit card to see eligible lounges</span>
+                      </div>
+                    </div>
+                    <SearchableDropdown
+                      options={cardOptions}
+                      placeholder={loading ? "Loading cards..." : "Search your credit card"}
+                      value={selectedCard}
+                      onChange={setSelectedCard}
+                      icon={<CreditCard className="w-5 h-5" />}
+                      className="transform transition-all duration-300 hover:scale-105"
+                    />
+                  </div>
+
+                  {/* City Question */}
+                  <div className="space-y-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                    <div className="text-center md:text-left">
+                      <label className="flex items-center justify-center md:justify-start text-xl font-bold text-gray-900 mb-2">
+                        <MapPin className="w-6 h-6 mr-3 text-amber-600" />
+                        Where do you want to use the lounge?
+                      </label>
+                      <div className="flex items-center justify-center md:justify-start text-sm text-gray-600 mb-4">
+                        <span className="mr-2">💡</span>
+                        <span>Choose a city to find lounges there</span>
+                      </div>
+                    </div>
+                    <SearchableDropdown
+                      options={cityOptions}
+                      placeholder={loading ? "Loading cities..." : "Search destination city"}
+                      value={selectedCity}
+                      onChange={setSelectedCity}
+                      icon={<MapPin className="w-5 h-5" />}
+                      className="transform transition-all duration-300 hover:scale-105"
+                    />
+                  </div>
                 </div>
 
-                {/* City Input */}
-                <div className="space-y-3">
-                  <label className="flex items-center text-lg font-semibold text-gray-800">
-                    <MapPin className="w-5 h-5 mr-2 text-amber-600" />
-                    Where do you want to use the lounge?
-                  </label>
-                  <SearchableDropdown
-                    options={cityOptions}
-                    placeholder={loading ? "Loading cities..." : "Select city"}
-                    value={selectedCity}
-                    onChange={setSelectedCity}
-                    icon={<MapPin className="w-5 h-5" />}
-                  />
-                  <p className="text-sm text-gray-500">Optional - Find lounges in your destination city</p>
-                </div>
-
-                {/* Network Input */}
-                <div className="space-y-3">
-                  <label className="flex items-center text-lg font-semibold text-gray-800">
-                    <NetworkIcon className="w-5 h-5 mr-2 text-green-600" />
-                    Select your card network
-                  </label>
-                  <SearchableDropdown
-                    options={networkOptions}
-                    placeholder={loading ? "Loading networks..." : "Select network (Visa, Mastercard, etc.)"}
-                    value={selectedNetwork}
-                    onChange={setSelectedNetwork}
-                    icon={<NetworkIcon className="w-5 h-5" />}
-                  />
-                  <p className="text-sm text-gray-500">Optional - Filter by card network type</p>
-                </div>
+                {/* Conditional Network Field - Only show if card is selected */}
+                {selectedCard && (
+                  <div className="space-y-4 animate-fade-in border-t border-gray-100 pt-8">
+                    <div className="text-center">
+                      <label className="flex items-center justify-center text-lg font-semibold text-gray-800 mb-2">
+                        <NetworkIcon className="w-5 h-5 mr-3 text-green-600" />
+                        Select your card network
+                      </label>
+                      <div className="flex items-center justify-center text-sm text-gray-600 mb-4">
+                        <span className="mr-2">💡</span>
+                        <span>Filter by card network (Visa, Mastercard, Diners Club, etc.)</span>
+                      </div>
+                    </div>
+                    <div className="max-w-md mx-auto">
+                      <SearchableDropdown
+                        options={networkOptions}
+                        placeholder={loading ? "Loading networks..." : "Select network"}
+                        value={selectedNetwork}
+                        onChange={setSelectedNetwork}
+                        icon={<NetworkIcon className="w-5 h-5" />}
+                        className="transform transition-all duration-300 hover:scale-105"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Search Logic Indicator */}
               {(selectedCard || selectedCity || selectedNetwork) && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-center justify-center text-blue-800 flex-wrap gap-2">
+                <div className="bg-gradient-to-r from-blue-50 to-amber-50 border border-blue-200 rounded-xl p-6 mt-8 mb-8 animate-fade-in">
+                  <div className="text-center mb-4">
+                    <p className="text-sm font-medium text-gray-700">Your search criteria:</p>
+                  </div>
+                  <div className="flex items-center justify-center text-blue-800 flex-wrap gap-3">
                     {selectedCard && (
-                      <span className="flex items-center bg-white px-3 py-1 rounded-full">
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        {selectedCard}
+                      <span className="flex items-center bg-white px-4 py-2 rounded-full shadow-sm border border-blue-100 transform transition-all hover:scale-105">
+                        <CreditCard className="w-4 h-4 mr-2 text-blue-600" />
+                        <span className="font-medium">{selectedCard}</span>
                       </span>
                     )}
                     {selectedCity && (
-                      <span className="flex items-center bg-white px-3 py-1 rounded-full">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        {selectedCity}
+                      <span className="flex items-center bg-white px-4 py-2 rounded-full shadow-sm border border-amber-100 transform transition-all hover:scale-105">
+                        <MapPin className="w-4 h-4 mr-2 text-amber-600" />
+                        <span className="font-medium">{selectedCity}</span>
                       </span>
                     )}
                     {selectedNetwork && (
-                      <span className="flex items-center bg-white px-3 py-1 rounded-full">
-                        <NetworkIcon className="w-4 h-4 mr-2" />
-                        {selectedNetwork}
+                      <span className="flex items-center bg-white px-4 py-2 rounded-full shadow-sm border border-green-100 transform transition-all hover:scale-105">
+                        <NetworkIcon className="w-4 h-4 mr-2 text-green-600" />
+                        <span className="font-medium">{selectedNetwork}</span>
                       </span>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Search Button */}
-              <Button 
-                onClick={handleSearch}
-                disabled={!selectedCard && !selectedCity && !selectedNetwork}
-                className="w-full py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                <Search className="w-5 h-5 mr-2" />
-                Check Lounge Access
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
+              {/* Sticky Search Button with Travel Theme */}
+              <div className="relative">
+                <Button 
+                  onClick={handleSearch}
+                  disabled={!selectedCard && !selectedCity && !selectedNetwork}
+                  className="w-full py-6 text-xl font-bold bg-gradient-to-r from-blue-600 via-blue-700 to-amber-600 hover:from-blue-700 hover:via-blue-800 hover:to-amber-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100 relative overflow-hidden group"
+                >
+                  {/* Animated Background */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-amber-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                  
+                  <div className="relative flex items-center justify-center">
+                    <Search className="w-6 h-6 mr-3 animate-pulse" />
+                    <span>Check Lounge Access</span>
+                    <ArrowRight className="w-6 h-6 ml-3 transform group-hover:translate-x-1 transition-transform duration-300" />
+                  </div>
+                  
+                  {/* Travel-themed decorative elements */}
+                  <div className="absolute top-2 right-4 opacity-30">
+                    <Plane className="w-4 h-4 transform rotate-45 text-white" />
+                  </div>
+                </Button>
+              </div>
 
               {/* Popular Searches */}
               <div className="mt-8 pt-6 border-t border-gray-100">
