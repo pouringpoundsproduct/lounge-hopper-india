@@ -120,18 +120,23 @@ const SearchResults: React.FC<SearchResultsProps> = ({
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">No lounges found</h2>
               <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                No lounges found matching your search criteria.
+                {searchType === 'card' 
+                  ? "Sorry, no lounges available with this card. But you can unlock access with these cards:"
+                  : "No lounges found matching your search criteria."
+                }
               </p>
               
-              {/* Show eligible cards for location-only searches */}
-              {(searchType === 'city' || searchType === 'network') && eligibleCards.length > 0 && (
+              {/* Show eligible cards for all search types when no lounges found */}
+              {eligibleCards.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    {searchType === 'city' 
-                      ? `Cards that unlock lounges at ${selectedLocation}:`
-                      : `Cards available for ${selectedNetwork} network:`
-                    }
-                  </h3>
+                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                     {searchType === 'card' 
+                       ? `Cards that give you lounge access${selectedLocation ? ` at ${selectedLocation}` : ''}:`
+                       : searchType === 'city' 
+                         ? `Cards that unlock lounges at ${selectedLocation}:`
+                         : `Cards available for ${selectedNetwork} network:`
+                     }
+                   </h3>
                   <div className="grid gap-4 max-w-2xl mx-auto">
                     {eligibleCards.slice(0, 5).map((cardName, index) => (
                       <div key={index} className="flex items-center justify-between p-4 bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300">
