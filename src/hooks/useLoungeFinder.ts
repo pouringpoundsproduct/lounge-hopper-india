@@ -160,10 +160,21 @@ export const useLoungeFinder = () => {
     console.log('Searching with:', { cardName, city, network });
     console.log('Total lounges available:', lounges.length);
     
-    // Debug: Check first few lounges and their eligible cards
-    if (cardName && lounges.length > 0) {
-      console.log('Sample lounge eligible cards:', lounges[0].eligibleCards);
+    // Debug: Log all unique card names in the system
+    if (cardName) {
+      const allCardNames = new Set<string>();
+      lounges.forEach(lounge => {
+        lounge.eligibleCards.forEach(card => allCardNames.add(card));
+      });
+      console.log('All unique card names in system:', Array.from(allCardNames));
       console.log('Looking for card:', cardName);
+      
+      // Check if the card exists in our card-lounge relationships
+      const cardExists = Array.from(allCardNames).some(card => 
+        card.toLowerCase().includes(cardName.toLowerCase()) || 
+        cardName.toLowerCase().includes(card.toLowerCase())
+      );
+      console.log('Card exists in relationships:', cardExists);
     }
 
     if (cardName || city || network) {
@@ -172,11 +183,33 @@ export const useLoungeFinder = () => {
         let matchesCity = true;
         let matchesNetwork = true;
 
-        // Card filter
+        // Card filter - improved matching logic
         if (cardName) {
-          matchesCard = lounge.eligibleCards.some(card => 
-            card.toLowerCase().includes(cardName.toLowerCase())
-          );
+          matchesCard = lounge.eligibleCards.some(card => {
+            const cardLower = card.toLowerCase();
+            const searchLower = cardName.toLowerCase();
+            
+            // Try exact match first
+            if (cardLower === searchLower) return true;
+            
+            // Try partial matches
+            if (cardLower.includes(searchLower) || searchLower.includes(cardLower)) return true;
+            
+            // Try matching individual words
+            const cardWords = cardLower.split(' ');
+            const searchWords = searchLower.split(' ');
+            
+            // Check if most significant words match (excluding common words)
+            const significantSearchWords = searchWords.filter(word => 
+              !['credit', 'card', 'bank'].includes(word) && word.length > 2
+            );
+            
+            return significantSearchWords.some(searchWord => 
+              cardWords.some(cardWord => cardWord.includes(searchWord) || searchWord.includes(cardWord))
+            );
+          });
+          
+          console.log(`Card "${cardName}" matches ${results.length > 0 ? 'found' : 'not found'} in lounge ${lounge.name}`);
         }
 
         // City filter
@@ -193,10 +226,18 @@ export const useLoungeFinder = () => {
           );
         }
 
-        return matchesCard && matchesCity && matchesNetwork;
+        const matches = matchesCard && matchesCity && matchesNetwork;
+        if (cardName && matches) {
+          console.log(`Lounge "${lounge.name}" matches card "${cardName}". Eligible cards:`, lounge.eligibleCards);
+        }
+
+        return matches;
       });
 
-      console.log('Search results:', results.length);
+      console.log('Search results count:', results.length);
+      if (results.length > 0) {
+        console.log('First result:', results[0].name, 'Eligible cards:', results[0].eligibleCards);
+      }
     }
 
     return results;
