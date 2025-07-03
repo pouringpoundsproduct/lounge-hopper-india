@@ -1,51 +1,90 @@
 
 import React, { useState } from 'react';
-import { Search, CreditCard, MapPin, Plane } from 'lucide-react';
+import { Search, CreditCard, MapPin, Plane, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import SearchResults from '@/components/SearchResults';
-import { sampleLounges, sampleCards } from '@/data/sampleData';
+import SearchableDropdown from '@/components/SearchableDropdown';
+import { useLoungeFinder } from '@/hooks/useLoungeFinder';
 
 const Index = () => {
-  const [searchType, setSearchType] = useState<'card' | 'airport'>('card');
-  const [searchQuery, setSearchQuery] = useState('');
+  const { cards, lounges, loading, error, searchLounges, getEligibleCards } = useLoungeFinder();
+  const [selectedCard, setSelectedCard] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [searchType, setSearchType] = useState<'card' | 'airport' | 'both'>('both');
 
   const handleSearch = () => {
-    setHasSearched(true);
+    if (!selectedCard && !selectedLocation) return;
     
-    if (searchType === 'card') {
-      // Filter lounges by card eligibility
-      const cardResults = sampleLounges.filter(lounge => 
-        lounge.eligibleCards.some(card => 
-          card.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
-      setSearchResults(cardResults);
+    setHasSearched(true);
+    const results = searchLounges(selectedCard, selectedLocation);
+    setSearchResults(results);
+    
+    // Determine search type for results display
+    if (selectedCard && selectedLocation) {
+      setSearchType('both');
+    } else if (selectedCard) {
+      setSearchType('card');  
     } else {
-      // Filter lounges by airport/city
-      const airportResults = sampleLounges.filter(lounge => 
-        lounge.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lounge.airport.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setSearchResults(airportResults);
+      setSearchType('airport');
     }
   };
 
   const handleReset = () => {
     setHasSearched(false);
-    setSearchQuery('');
+    setSelectedCard('');
+    setSelectedLocation('');
     setSearchResults([]);
   };
+
+  // Prepare dropdown options
+  const cardOptions = cards.map(card => ({
+    value: card.name,
+    label: card.name,
+    icon: '/placeholder.svg' // You can add actual card logos later
+  }));
+
+  const locationOptions = Array.from(new Set([
+    ...lounges.map(lounge => lounge.city),
+    ...lounges.map(lounge => lounge.airport)
+  ])).map(location => ({
+    value: location,
+    label: location
+  }));
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-amber-50 flex items-center justify-center">
+        <div className="text-center">
+          <Plane className="w-12 h-12 text-blue-600 animate-bounce mx-auto mb-4" />
+          <p className="text-xl text-gray-600">Loading lounge data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-amber-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl text-red-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
 
   if (hasSearched) {
     return (
       <SearchResults 
         results={searchResults} 
         searchType={searchType}
-        searchQuery={searchQuery}
+        searchQuery={selectedCard || selectedLocation}
+        selectedCard={selectedCard}
+        selectedLocation={selectedLocation}
+        eligibleCards={getEligibleCards(selectedLocation)}
         onBack={handleReset}
       />
     );
@@ -101,114 +140,120 @@ const Index = () => {
           
           <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
             Find out which airport lounges you can access with your credit card, 
-            or discover the best cards for your city.
+            or discover the best cards for your destination.
           </p>
         </div>
 
-        {/* Search Section */}
-        <div className="max-w-2xl mx-auto">
+        {/* Enhanced Dual Search Section */}
+        <div className="max-w-4xl mx-auto">
           <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-8">
-              {/* Search Type Toggle */}
-              <div className="flex rounded-lg bg-gray-100 p-1 mb-8">
-                <button
-                  onClick={() => setSearchType('card')}
-                  className={`flex-1 flex items-center justify-center py-3 px-4 rounded-md text-sm font-medium transition-all ${
-                    searchType === 'card'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  By Credit Card
-                </button>
-                <button
-                  onClick={() => setSearchType('airport')}
-                  className={`flex-1 flex items-center justify-center py-3 px-4 rounded-md text-sm font-medium transition-all ${
-                    searchType === 'airport'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  <MapPin className="w-4 h-4 mr-2" />
-                  By City/Airport
-                </button>
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Find Your Perfect Lounge</h2>
+                <p className="text-gray-600">Answer either question or both for more precise results</p>
               </div>
 
-              {/* Search Input */}
-              <div className="relative mb-8">
-                <Input
-                  type="text"
-                  placeholder={
-                    searchType === 'card' 
-                      ? "Enter or select your credit card (e.g., HDFC Diners Club)"
-                      : "Enter your city or airport (e.g., Mumbai, BOM)"
-                  }
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-                  onKeyPress={(e) => e.key === 'Enter' && searchQuery && handleSearch()}
-                />
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              {/* Dual Search Inputs */}
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+                {/* Credit Card Input */}
+                <div className="space-y-3">
+                  <label className="flex items-center text-lg font-semibold text-gray-800">
+                    <CreditCard className="w-5 h-5 mr-2 text-blue-600" />
+                    Which credit card do you have?
+                  </label>
+                  <SearchableDropdown
+                    options={cardOptions}
+                    placeholder="Select or search your credit card"
+                    value={selectedCard}
+                    onChange={setSelectedCard}
+                    icon={<CreditCard className="w-5 h-5" />}
+                  />
+                  <p className="text-sm text-gray-500">Optional - Leave blank to see all lounges at your destination</p>
+                </div>
+
+                {/* Location Input */}
+                <div className="space-y-3">
+                  <label className="flex items-center text-lg font-semibold text-gray-800">
+                    <MapPin className="w-5 h-5 mr-2 text-amber-600" />
+                    Where do you want to use the lounge?
+                  </label>
+                  <SearchableDropdown
+                    options={locationOptions}
+                    placeholder="Select city or airport"
+                    value={selectedLocation}
+                    onChange={setSelectedLocation}
+                    icon={<MapPin className="w-5 h-5" />}
+                  />
+                  <p className="text-sm text-gray-500">Optional - Leave blank to see all lounges for your card</p>
+                </div>
               </div>
+
+              {/* Search Logic Indicator */}
+              {(selectedCard || selectedLocation) && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-center justify-center text-blue-800">
+                    {selectedCard && selectedLocation ? (
+                      <span className="flex items-center">
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        {selectedCard}
+                        <span className="mx-3 font-bold">AND</span>
+                        <MapPin className="w-4 h-4 mr-2" />
+                        {selectedLocation}
+                      </span>
+                    ) : selectedCard ? (
+                      <span className="flex items-center">
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        Show all lounges for {selectedCard}
+                      </span>
+                    ) : (
+                      <span className="flex items-center">
+                        <MapPin className="w-4 h-4 mr-2" />
+                        Show all lounges at {selectedLocation}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Search Button */}
               <Button 
                 onClick={handleSearch}
-                disabled={!searchQuery.trim()}
+                disabled={!selectedCard && !selectedLocation}
                 className="w-full py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 <Search className="w-5 h-5 mr-2" />
                 Check Lounge Access
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
 
-              {/* Quick suggestions */}
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <p className="text-sm text-gray-500 mb-3">Popular searches:</p>
-                <div className="flex flex-wrap gap-2">
-                  {searchType === 'card' ? (
-                    <>
-                      <button 
-                        onClick={() => setSearchQuery('HDFC Diners Club')}
-                        className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm hover:bg-blue-100 transition-colors"
-                      >
-                        HDFC Diners Club
-                      </button>
-                      <button 
-                        onClick={() => setSearchQuery('American Express')}
-                        className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm hover:bg-blue-100 transition-colors"
-                      >
-                        American Express
-                      </button>
-                      <button 
-                        onClick={() => setSearchQuery('Axis Magnus')}
-                        className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm hover:bg-blue-100 transition-colors"
-                      >
-                        Axis Magnus
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button 
-                        onClick={() => setSearchQuery('Mumbai')}
-                        className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-sm hover:bg-amber-100 transition-colors"
-                      >
-                        Mumbai
-                      </button>
-                      <button 
-                        onClick={() => setSearchQuery('Delhi')}
-                        className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-sm hover:bg-amber-100 transition-colors"
-                      >
-                        Delhi
-                      </button>
-                      <button 
-                        onClick={() => setSearchQuery('Bangalore')}
-                        className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-sm hover:bg-amber-100 transition-colors"
-                      >
-                        Bangalore
-                      </button>
-                    </>
-                  )}
+              {/* Popular Searches */}
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <p className="text-sm text-gray-500 mb-4 text-center">Popular searches:</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <button 
+                    onClick={() => setSelectedCard('HDFC Diners Club')}
+                    className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100 transition-colors"
+                  >
+                    HDFC Diners Club
+                  </button>
+                  <button 
+                    onClick={() => setSelectedLocation('Mumbai')}
+                    className="px-3 py-2 bg-amber-50 text-amber-600 rounded-lg text-sm hover:bg-amber-100 transition-colors"
+                  >
+                    Mumbai
+                  </button>
+                  <button 
+                    onClick={() => setSelectedCard('American Express')}
+                    className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100 transition-colors"
+                  >
+                    American Express
+                  </button>
+                  <button 
+                    onClick={() => setSelectedLocation('Delhi')}
+                    className="px-3 py-2 bg-amber-50 text-amber-600 rounded-lg text-sm hover:bg-amber-100 transition-colors"
+                  >
+                    Delhi
+                  </button>
                 </div>
               </div>
             </CardContent>
@@ -218,7 +263,7 @@ const Index = () => {
         {/* Footer */}
         <div className="text-center mt-16 text-gray-500">
           <p className="text-sm">
-            Covering all major airports across India • Updated lounge information
+            Covering {lounges.length} lounges across India • Real-time data from {cards.length} credit cards
           </p>
         </div>
       </div>
