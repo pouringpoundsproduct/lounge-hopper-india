@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Search, CreditCard, MapPin, Plane, ArrowRight } from 'lucide-react';
+import { Search, CreditCard, MapPin, Plane, ArrowRight, Network as NetworkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import SearchResults from '@/components/SearchResults';
@@ -8,34 +8,39 @@ import SearchableDropdown from '@/components/SearchableDropdown';
 import { useLoungeFinder } from '@/hooks/useLoungeFinder';
 
 const Index = () => {
-  const { cards, lounges, loading, error, searchLounges, getEligibleCards } = useLoungeFinder();
+  const { cards, lounges, networks, cities, loading, error, searchLounges, getEligibleCards } = useLoungeFinder();
   const [selectedCard, setSelectedCard] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [selectedNetwork, setSelectedNetwork] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
-  const [searchType, setSearchType] = useState<'card' | 'airport' | 'both'>('both');
+  const [searchType, setSearchType] = useState<'card' | 'city' | 'network' | 'multi'>('multi');
 
   const handleSearch = () => {
-    if (!selectedCard && !selectedLocation) return;
+    if (!selectedCard && !selectedCity && !selectedNetwork) return;
     
     setHasSearched(true);
-    const results = searchLounges(selectedCard, selectedLocation);
+    const results = searchLounges(selectedCard, selectedCity, selectedNetwork);
     setSearchResults(results);
     
     // Determine search type for results display
-    if (selectedCard && selectedLocation) {
-      setSearchType('both');
+    const searchCriteria = [selectedCard, selectedCity, selectedNetwork].filter(Boolean);
+    if (searchCriteria.length > 1) {
+      setSearchType('multi');
     } else if (selectedCard) {
       setSearchType('card');  
+    } else if (selectedCity) {
+      setSearchType('city');
     } else {
-      setSearchType('airport');
+      setSearchType('network');
     }
   };
 
   const handleReset = () => {
     setHasSearched(false);
     setSelectedCard('');
-    setSelectedLocation('');
+    setSelectedCity('');
+    setSelectedNetwork('');
     setSearchResults([]);
   };
 
@@ -43,15 +48,17 @@ const Index = () => {
   const cardOptions = cards.map(card => ({
     value: card.name,
     label: card.name,
-    icon: '/placeholder.svg' // You can add actual card logos later
+    icon: '/placeholder.svg'
   }));
 
-  const locationOptions = Array.from(new Set([
-    ...lounges.map(lounge => lounge.city),
-    ...lounges.map(lounge => lounge.airport)
-  ])).map(location => ({
-    value: location,
-    label: location
+  const cityOptions = cities.map(city => ({
+    value: city,
+    label: city
+  }));
+
+  const networkOptions = networks.map(network => ({
+    value: network.name,
+    label: `${network.name} (${network.cardCount} cards)`
   }));
 
   if (loading) {
@@ -81,10 +88,11 @@ const Index = () => {
       <SearchResults 
         results={searchResults} 
         searchType={searchType}
-        searchQuery={selectedCard || selectedLocation}
+        searchQuery={selectedCard || selectedCity || selectedNetwork}
         selectedCard={selectedCard}
-        selectedLocation={selectedLocation}
-        eligibleCards={getEligibleCards(selectedLocation)}
+        selectedLocation={selectedCity}
+        selectedNetwork={selectedNetwork}
+        eligibleCards={getEligibleCards(selectedCity, selectedNetwork)}
         onBack={handleReset}
       />
     );
@@ -144,17 +152,17 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Enhanced Dual Search Section */}
-        <div className="max-w-4xl mx-auto">
+        {/* Enhanced Triple Search Section */}
+        <div className="max-w-5xl mx-auto">
           <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
             <CardContent className="p-8">
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Find Your Perfect Lounge</h2>
-                <p className="text-gray-600">Answer either question or both for more precise results</p>
+                <p className="text-gray-600">Choose any combination of card, city, or network for precise results</p>
               </div>
 
-              {/* Dual Search Inputs */}
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
+              {/* Triple Search Inputs */}
+              <div className="grid md:grid-cols-3 gap-6 mb-8">
                 {/* Credit Card Input */}
                 <div className="space-y-3">
                   <label className="flex items-center text-lg font-semibold text-gray-800">
@@ -168,47 +176,62 @@ const Index = () => {
                     onChange={setSelectedCard}
                     icon={<CreditCard className="w-5 h-5" />}
                   />
-                  <p className="text-sm text-gray-500">Optional - Leave blank to see all lounges at your destination</p>
+                  <p className="text-sm text-gray-500">Optional - Find lounges for your specific card</p>
                 </div>
 
-                {/* Location Input */}
+                {/* City Input */}
                 <div className="space-y-3">
                   <label className="flex items-center text-lg font-semibold text-gray-800">
                     <MapPin className="w-5 h-5 mr-2 text-amber-600" />
                     Where do you want to use the lounge?
                   </label>
                   <SearchableDropdown
-                    options={locationOptions}
-                    placeholder="Select city or airport"
-                    value={selectedLocation}
-                    onChange={setSelectedLocation}
+                    options={cityOptions}
+                    placeholder="Select city"
+                    value={selectedCity}
+                    onChange={setSelectedCity}
                     icon={<MapPin className="w-5 h-5" />}
                   />
-                  <p className="text-sm text-gray-500">Optional - Leave blank to see all lounges for your card</p>
+                  <p className="text-sm text-gray-500">Optional - Find lounges in your destination city</p>
+                </div>
+
+                {/* Network Input */}
+                <div className="space-y-3">
+                  <label className="flex items-center text-lg font-semibold text-gray-800">
+                    <NetworkIcon className="w-5 h-5 mr-2 text-green-600" />
+                    Select your card network
+                  </label>
+                  <SearchableDropdown
+                    options={networkOptions}
+                    placeholder="Select network"
+                    value={selectedNetwork}
+                    onChange={setSelectedNetwork}
+                    icon={<NetworkIcon className="w-5 h-5" />}
+                  />
+                  <p className="text-sm text-gray-500">Optional - Filter by Visa, Mastercard, etc.</p>
                 </div>
               </div>
 
               {/* Search Logic Indicator */}
-              {(selectedCard || selectedLocation) && (
+              {(selectedCard || selectedCity || selectedNetwork) && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-center justify-center text-blue-800">
-                    {selectedCard && selectedLocation ? (
-                      <span className="flex items-center">
+                  <div className="flex items-center justify-center text-blue-800 flex-wrap gap-2">
+                    {selectedCard && (
+                      <span className="flex items-center bg-white px-3 py-1 rounded-full">
                         <CreditCard className="w-4 h-4 mr-2" />
                         {selectedCard}
-                        <span className="mx-3 font-bold">AND</span>
-                        <MapPin className="w-4 h-4 mr-2" />
-                        {selectedLocation}
                       </span>
-                    ) : selectedCard ? (
-                      <span className="flex items-center">
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        Show all lounges for {selectedCard}
-                      </span>
-                    ) : (
-                      <span className="flex items-center">
+                    )}
+                    {selectedCity && (
+                      <span className="flex items-center bg-white px-3 py-1 rounded-full">
                         <MapPin className="w-4 h-4 mr-2" />
-                        Show all lounges at {selectedLocation}
+                        {selectedCity}
+                      </span>
+                    )}
+                    {selectedNetwork && (
+                      <span className="flex items-center bg-white px-3 py-1 rounded-full">
+                        <NetworkIcon className="w-4 h-4 mr-2" />
+                        {selectedNetwork}
                       </span>
                     )}
                   </div>
@@ -218,7 +241,7 @@ const Index = () => {
               {/* Search Button */}
               <Button 
                 onClick={handleSearch}
-                disabled={!selectedCard && !selectedLocation}
+                disabled={!selectedCard && !selectedCity && !selectedNetwork}
                 className="w-full py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 <Search className="w-5 h-5 mr-2" />
@@ -237,19 +260,19 @@ const Index = () => {
                     HDFC Diners Club
                   </button>
                   <button 
-                    onClick={() => setSelectedLocation('Mumbai')}
+                    onClick={() => setSelectedCity('Mumbai')}
                     className="px-3 py-2 bg-amber-50 text-amber-600 rounded-lg text-sm hover:bg-amber-100 transition-colors"
                   >
                     Mumbai
                   </button>
                   <button 
-                    onClick={() => setSelectedCard('American Express')}
-                    className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100 transition-colors"
+                    onClick={() => setSelectedNetwork('Visa')}
+                    className="px-3 py-2 bg-green-50 text-green-600 rounded-lg text-sm hover:bg-green-100 transition-colors"
                   >
-                    American Express
+                    Visa Network
                   </button>
                   <button 
-                    onClick={() => setSelectedLocation('Delhi')}
+                    onClick={() => setSelectedCity('Delhi')}
                     className="px-3 py-2 bg-amber-50 text-amber-600 rounded-lg text-sm hover:bg-amber-100 transition-colors"
                   >
                     Delhi
@@ -263,7 +286,7 @@ const Index = () => {
         {/* Footer */}
         <div className="text-center mt-16 text-gray-500">
           <p className="text-sm">
-            Covering {lounges.length} lounges across India • Real-time data from {cards.length} credit cards
+            Covering {lounges.length} lounges across India • {cards.length} credit cards • {networks.length} networks
           </p>
         </div>
       </div>

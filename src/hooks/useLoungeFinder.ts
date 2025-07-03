@@ -17,6 +17,7 @@ export interface Lounge {
   reviews: string;
   image: string;
   eligibleCards: string[];
+  networks: string[];
 }
 
 export interface CreditCard {
@@ -26,9 +27,16 @@ export interface CreditCard {
   network?: string;
 }
 
+export interface Network {
+  name: string;
+  cardCount: number;
+}
+
 export const useLoungeFinder = () => {
   const [lounges, setLounges] = useState<Lounge[]>([]);
   const [cards, setCards] = useState<CreditCard[]>([]);
+  const [networks, setNetworks] = useState<Network[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -93,9 +101,10 @@ export const useLoungeFinder = () => {
 
       // Transform and combine data
       const transformedLounges: Lounge[] = loungesData?.map((lounge: any) => {
-        const eligibleCards = cardLoungeData
-          ?.filter((cl: any) => cl.lounge_id === lounge.Lounge_Id)
-          ?.map((cl: any) => cl.card_name || 'Unknown Card') || [];
+        const loungeRelations = cardLoungeData?.filter((cl: any) => cl.lounge_id === lounge.Lounge_Id) || [];
+        
+        const eligibleCards = loungeRelations.map((cl: any) => cl.card_name || 'Unknown Card');
+        const networks = [...new Set(loungeRelations.map((cl: any) => cl.network).filter(Boolean))];
 
         return {
           id: lounge.Lounge_Id,
@@ -111,7 +120,8 @@ export const useLoungeFinder = () => {
           rating: lounge['User Ratings'] || '4.0',
           reviews: '100+',
           image: lounge['Lounge Photos'] || '/placeholder.svg',
-          eligibleCards
+          eligibleCards,
+          networks
         };
       }) || [];
 
@@ -121,12 +131,32 @@ export const useLoungeFinder = () => {
         network: card.CG_Name
       })) || [];
 
+      // Extract unique cities
+      const uniqueCities = [...new Set(transformedLounges.map(lounge => lounge.city).filter(Boolean))].sort();
+      
+      // Extract unique networks with card counts
+      const networkCounts = cardLoungeData?.reduce((acc: any, relation: any) => {
+        if (relation.network) {
+          acc[relation.network] = (acc[relation.network] || 0) + 1;
+        }
+        return acc;
+      }, {}) || {};
+
+      const uniqueNetworks = Object.entries(networkCounts).map(([name, count]) => ({
+        name,
+        cardCount: count as number
+      })).sort((a, b) => a.name.localeCompare(b.name));
+
       console.log('Data transformation complete');
       console.log('Transformed lounges:', transformedLounges.length);
       console.log('Transformed cards:', transformedCards.length);
+      console.log('Unique cities:', uniqueCities.length);
+      console.log('Unique networks:', uniqueNetworks.length);
 
       setLounges(transformedLounges);
       setCards(transformedCards);
+      setCities(uniqueCities);
+      setNetworks(uniqueNetworks);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Failed to load data. Please try again.');
@@ -135,55 +165,71 @@ export const useLoungeFinder = () => {
     }
   };
 
-  const searchLounges = (cardName?: string, location?: string) => {
+  const searchLounges = (cardName?: string, city?: string, network?: string) => {
     let results = lounges;
 
-    console.log('Searching with:', { cardName, location });
+    console.log('Searching with:', { cardName, city, network });
     console.log('Total lounges available:', lounges.length);
 
-    if (cardName && location) {
-      // Both criteria: AND logic
-      results = lounges.filter(lounge => 
-        lounge.eligibleCards.some(card => 
-          card.toLowerCase().includes(cardName.toLowerCase())
-        ) &&
-        (lounge.city.toLowerCase().includes(location.toLowerCase()) ||
-         lounge.airport.toLowerCase().includes(location.toLowerCase()) ||
-         lounge.state.toLowerCase().includes(location.toLowerCase()))
-      );
-      console.log('Search results (both criteria):', results.length);
-    } else if (cardName) {
-      // Card only
-      results = lounges.filter(lounge => 
-        lounge.eligibleCards.some(card => 
-          card.toLowerCase().includes(cardName.toLowerCase())
-        )
-      );
-      console.log('Search results (card only):', results.length);
-    } else if (location) {
-      // Location only
-      results = lounges.filter(lounge => 
-        lounge.city.toLowerCase().includes(location.toLowerCase()) ||
-        lounge.airport.toLowerCase().includes(location.toLowerCase()) ||
-        lounge.state.toLowerCase().includes(location.toLowerCase())
-      );
-      console.log('Search results (location only):', results.length);
+    if (cardName || city || network) {
+      results = lounges.filter(lounge => {
+        let matchesCard = true;
+        let matchesCity = true;
+        let matchesNetwork = true;
+
+        // Card filter
+        if (cardName) {
+          matchesCard = lounge.eligibleCards.some(card => 
+            card.toLowerCase().includes(cardName.toLowerCase())
+          );
+        }
+
+        // City filter
+        if (city) {
+          matchesCity = lounge.city.toLowerCase().includes(city.toLowerCase()) ||
+                      lounge.airport.toLowerCase().includes(city.toLowerCase()) ||
+                      lounge.state.toLowerCase().includes(city.toLowerCase());
+        }
+
+        // Network filter
+        if (network) {
+          matchesNetwork = lounge.networks.some(loungeNetwork => 
+            loungeNetwork.toLowerCase().includes(network.toLowerCase())
+          );
+        }
+
+        return matchesCard && matchesCity && matchesNetwork;
+      });
+
+      console.log('Search results:', results.length);
     }
 
     return results;
   };
 
-  const getEligibleCards = (location?: string) => {
-    if (!location) return [];
+  const getEligibleCards = (city?: string, network?: string) => {
+    if (!city && !network) return [];
     
-    const locationLounges = lounges.filter(lounge => 
-      lounge.city.toLowerCase().includes(location.toLowerCase()) ||
-      lounge.airport.toLowerCase().includes(location.toLowerCase()) ||
-      lounge.state.toLowerCase().includes(location.toLowerCase())
-    );
+    let filteredLounges = lounges;
+
+    if (city) {
+      filteredLounges = filteredLounges.filter(lounge => 
+        lounge.city.toLowerCase().includes(city.toLowerCase()) ||
+        lounge.airport.toLowerCase().includes(city.toLowerCase()) ||
+        lounge.state.toLowerCase().includes(city.toLowerCase())
+      );
+    }
+
+    if (network) {
+      filteredLounges = filteredLounges.filter(lounge =>
+        lounge.networks.some(loungeNetwork => 
+          loungeNetwork.toLowerCase().includes(network.toLowerCase())
+        )
+      );
+    }
 
     const eligibleCardNames = new Set<string>();
-    locationLounges.forEach(lounge => {
+    filteredLounges.forEach(lounge => {
       lounge.eligibleCards.forEach(card => eligibleCardNames.add(card));
     });
 
@@ -193,6 +239,8 @@ export const useLoungeFinder = () => {
   return {
     lounges,
     cards,
+    networks,
+    cities,
     loading,
     error,
     searchLounges,

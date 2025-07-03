@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, MapPin, Clock, Star, CreditCard, Plane } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Star, CreditCard, Plane, Network } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,10 +8,11 @@ import LoungePage from './LoungePage';
 
 interface SearchResultsProps {
   results: any[];
-  searchType: 'card' | 'airport' | 'both';
+  searchType: 'card' | 'city' | 'network' | 'multi';
   searchQuery: string;
   selectedCard?: string;
   selectedLocation?: string;
+  selectedNetwork?: string;
   eligibleCards?: string[];
   onBack: () => void;
 }
@@ -22,6 +23,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   searchQuery, 
   selectedCard,
   selectedLocation,
+  selectedNetwork,
   eligibleCards = [],
   onBack 
 }) => {
@@ -32,22 +34,30 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   }
 
   const getResultsTitle = () => {
-    if (searchType === 'both') {
-      return `Lounges for ${selectedCard} at ${selectedLocation}`;
+    if (searchType === 'multi') {
+      const criteria = [];
+      if (selectedCard) criteria.push(selectedCard);
+      if (selectedLocation) criteria.push(selectedLocation);
+      if (selectedNetwork) criteria.push(selectedNetwork);
+      return `Lounges matching: ${criteria.join(', ')}`;
     } else if (searchType === 'card') {
       return `Lounges you can access with ${selectedCard}`;
-    } else {
+    } else if (searchType === 'city') {
       return `Lounges at ${selectedLocation}`;
+    } else {
+      return `Lounges accepting ${selectedNetwork} cards`;
     }
   };
 
   const getResultsSubtitle = () => {
-    if (searchType === 'both') {
-      return "Perfect matches for your card and destination:";
+    if (searchType === 'multi') {
+      return "Perfect matches for your search criteria:";
     } else if (searchType === 'card') {
       return "Enjoy your journey! Here's where you can relax:";
-    } else {
+    } else if (searchType === 'city') {
       return "Available lounges at your destination:";
+    } else {
+      return `Lounges that accept ${selectedNetwork} network cards:`;
     }
   };
 
@@ -70,29 +80,28 @@ const SearchResults: React.FC<SearchResultsProps> = ({
         </div>
 
         {/* Search Summary */}
-        {(selectedCard || selectedLocation) && (
+        {(selectedCard || selectedLocation || selectedNetwork) && (
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 mb-6 border border-gray-200">
-            <div className="flex items-center justify-center text-gray-700">
-              {selectedCard && selectedLocation ? (
-                <span className="flex items-center">
-                  <CreditCard className="w-4 h-4 mr-2 text-blue-600" />
-                  {selectedCard}
-                  <span className="mx-3 font-bold text-gray-400">+</span>
-                  <MapPin className="w-4 h-4 mr-2 text-amber-600" />
-                  {selectedLocation}
-                </span>
-              ) : selectedCard ? (
-                <span className="flex items-center">
+            <div className="flex items-center justify-center text-gray-700 flex-wrap gap-2">
+              {selectedCard && (
+                <span className="flex items-center bg-blue-50 px-3 py-1 rounded-full">
                   <CreditCard className="w-4 h-4 mr-2 text-blue-600" />
                   {selectedCard}
                 </span>
-              ) : (
-                <span className="flex items-center">
+              )}
+              {selectedLocation && (
+                <span className="flex items-center bg-amber-50 px-3 py-1 rounded-full">
                   <MapPin className="w-4 h-4 mr-2 text-amber-600" />
                   {selectedLocation}
                 </span>
               )}
-              <span className="ml-3 text-gray-500">• {results.length} result{results.length !== 1 ? 's' : ''}</span>
+              {selectedNetwork && (
+                <span className="flex items-center bg-green-50 px-3 py-1 rounded-full">
+                  <Network className="w-4 h-4 mr-2 text-green-600" />
+                  {selectedNetwork}
+                </span>
+              )}
+              <span className="text-gray-500">• {results.length} result{results.length !== 1 ? 's' : ''}</span>
             </div>
           </div>
         )}
@@ -106,19 +115,17 @@ const SearchResults: React.FC<SearchResultsProps> = ({
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">No lounges found</h2>
               <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                {searchType === 'both' 
-                  ? `No lounges found for ${selectedCard} at ${selectedLocation}.`
-                  : searchType === 'card'
-                  ? `No lounges found for ${selectedCard}.`
-                  : `No lounges found at ${selectedLocation}.`
-                }
+                No lounges found matching your search criteria.
               </p>
               
               {/* Show eligible cards for location-only searches */}
-              {searchType === 'airport' && eligibleCards.length > 0 && (
+              {(searchType === 'city' || searchType === 'network') && eligibleCards.length > 0 && (
                 <div className="mb-8">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    Cards that unlock lounges at {selectedLocation}:
+                    {searchType === 'city' 
+                      ? `Cards that unlock lounges at ${selectedLocation}:`
+                      : `Cards available for ${selectedNetwork} network:`
+                    }
                   </h3>
                   <div className="grid gap-3 max-w-md mx-auto">
                     {eligibleCards.slice(0, 5).map((cardName, index) => (
@@ -197,8 +204,27 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                     )}
                   </div>
 
+                  {/* Show networks for network searches */}
+                  {(searchType === 'network' || searchType === 'city') && lounge.networks?.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs text-gray-500 mb-2">Accepted networks:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {lounge.networks.slice(0, 3).map((network: string) => (
+                          <Badge key={network} variant="outline" className="text-xs">
+                            {network}
+                          </Badge>
+                        ))}
+                        {lounge.networks.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{lounge.networks.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Show eligible cards for location searches */}
-                  {searchType === 'airport' && lounge.eligibleCards.length > 0 && (
+                  {searchType === 'city' && lounge.eligibleCards.length > 0 && (
                     <div className="mb-4">
                       <p className="text-xs text-gray-500 mb-2">Eligible cards:</p>
                       <div className="flex flex-wrap gap-1">
