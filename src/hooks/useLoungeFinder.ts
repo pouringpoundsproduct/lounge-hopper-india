@@ -107,7 +107,7 @@ export const useLoungeFinder = () => {
           paidAccess: lounge['Paid Access Fee'],
           rating: lounge['User Ratings'] || '4.0',
           reviews: '100+',
-          image: lounge['Lounge Photos'] || '/placeholder.svg',
+          image: lounge['Lounge Photos'] || '/src/assets/lounge-default.jpg',
           eligibleCards,
           networks
         };

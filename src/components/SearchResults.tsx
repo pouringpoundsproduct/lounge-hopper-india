@@ -29,6 +29,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({
 }) => {
   const [selectedLounge, setSelectedLounge] = useState<any>(null);
 
+  // Scroll to top when component mounts or results change
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [results]);
+
   if (selectedLounge) {
     return <LoungePage lounge={selectedLounge} onBack={() => setSelectedLounge(null)} />;
   }
@@ -168,7 +173,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                     alt={lounge.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder.svg';
+                      (e.target as HTMLImageElement).src = '/src/assets/lounge-default.jpg';
                     }}
                   />
                   <div className="absolute top-3 right-3">

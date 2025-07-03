@@ -54,6 +54,9 @@ const LoungePage: React.FC<LoungePageProps> = ({ lounge, onBack }) => {
             src={lounge.image} 
             alt={lounge.name}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/src/assets/lounge-default.jpg';
+            }}
           />
           <div className="absolute top-4 right-4">
             <Badge className="bg-white/90 text-gray-800 font-medium">
@@ -149,8 +152,8 @@ const LoungePage: React.FC<LoungePageProps> = ({ lounge, onBack }) => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {lounge.eligibleCards.map((card: string) => (
-                  <div key={card} className="flex items-center justify-between p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                {lounge.eligibleCards.map((card: string, index: number) => (
+                  <div key={`${card}-${index}`} className="flex items-center justify-between p-3 bg-white/10 rounded-lg backdrop-blur-sm">
                     <span className="font-medium">{card}</span>
                     <Badge variant="secondary" className="bg-white/20 text-white border-0">
                       Eligible

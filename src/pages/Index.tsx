@@ -42,6 +42,8 @@ const Index = () => {
     setSelectedCity('');
     setSelectedNetwork('');
     setSearchResults([]);
+    // Scroll to top when returning to search
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Prepare dropdown options
@@ -174,12 +176,12 @@ const Index = () => {
               {/* Main Search Questions */}
               <div className="space-y-8">
                 {/* Primary Questions - Side by Side on Desktop, Stacked on Mobile */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                   {/* Credit Card Question */}
                   <div className="space-y-4 animate-fade-in">
                     <div className="text-center md:text-left">
-                      <label className="flex items-center justify-center md:justify-start text-xl font-bold text-gray-900 mb-2">
-                        <CreditCard className="w-6 h-6 mr-3 text-blue-600" />
+                      <label className="flex items-center justify-center md:justify-start text-lg md:text-xl font-bold text-gray-900 mb-2">
+                        <CreditCard className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 text-blue-600" />
                         Which credit card do you have?
                       </label>
                       <div className="flex items-center justify-center md:justify-start text-sm text-gray-600 mb-4">
@@ -200,8 +202,8 @@ const Index = () => {
                   {/* City Question */}
                   <div className="space-y-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                     <div className="text-center md:text-left">
-                      <label className="flex items-center justify-center md:justify-start text-xl font-bold text-gray-900 mb-2">
-                        <MapPin className="w-6 h-6 mr-3 text-amber-600" />
+                      <label className="flex items-center justify-center md:justify-start text-lg md:text-xl font-bold text-gray-900 mb-2">
+                        <MapPin className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 text-amber-600" />
                         Where do you want to use the lounge?
                       </label>
                       <div className="flex items-center justify-center md:justify-start text-sm text-gray-600 mb-4">
