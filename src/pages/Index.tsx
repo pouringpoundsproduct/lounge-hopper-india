@@ -87,6 +87,16 @@ const Index = () => {
   }
 
   if (hasSearched) {
+    // Calculate eligible cards properly for all search types
+    let eligibleCardsForResults: string[] = [];
+    if (selectedCity || selectedNetwork) {
+      // For city/network searches, get eligible cards for that location/network
+      eligibleCardsForResults = getEligibleCards(selectedCity, selectedNetwork);
+    } else if (selectedCard && searchResults.length === 0) {
+      // For card searches with no results, get ALL eligible cards from all lounges
+      eligibleCardsForResults = getEligibleCards();
+    }
+
     return (
       <SearchResults 
         results={searchResults} 
@@ -95,7 +105,7 @@ const Index = () => {
         selectedCard={selectedCard}
         selectedLocation={selectedCity}
         selectedNetwork={selectedNetwork}
-        eligibleCards={getEligibleCards(selectedCity, selectedNetwork)}
+        eligibleCards={eligibleCardsForResults}
         onBack={handleReset}
       />
     );
