@@ -197,7 +197,23 @@ export const useLoungeFinder = () => {
   };
 
   const getEligibleCards = (city?: string, network?: string) => {
-    if (!city && !network) return [];
+    // Hardcoded fallback cards as requested by user
+    const fallbackCardIds = [54, 76, 19, 83, 36, 18, 53, 49, 51];
+    const fallbackCardNames = cards
+      .filter(card => fallbackCardIds.includes(card.id))
+      .map(card => card.name);
+    
+    // If no filters provided, return all unique eligible cards from all lounges
+    if (!city && !network) {
+      const allEligibleCardNames = new Set<string>();
+      lounges.forEach(lounge => {
+        lounge.eligibleCards.forEach(card => allEligibleCardNames.add(card));
+      });
+      
+      const allCards = Array.from(allEligibleCardNames);
+      // If no cards found, return hardcoded fallback
+      return allCards.length > 0 ? allCards : fallbackCardNames;
+    }
     
     let filteredLounges = lounges;
 
@@ -222,7 +238,9 @@ export const useLoungeFinder = () => {
       lounge.eligibleCards.forEach(card => eligibleCardNames.add(card));
     });
 
-    return Array.from(eligibleCardNames);
+    const filteredCards = Array.from(eligibleCardNames);
+    // If no filtered cards found, return hardcoded fallback
+    return filteredCards.length > 0 ? filteredCards : fallbackCardNames;
   };
 
   return {
