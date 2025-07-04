@@ -38,6 +38,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({
     return <LoungePage lounge={selectedLounge} onBack={() => setSelectedLounge(null)} />;
   }
 
+  // Helper function to get a fallback image
+  const getFallbackImage = () => {
+    return 'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=400&h=250&fit=crop';
+  };
+
   const getResultsTitle = () => {
     if (searchType === 'multi') {
       const criteria = [];
@@ -195,7 +200,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                     alt={lounge.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/src/assets/lounge-default.jpg';
+                      console.log(`Image failed to load for ${lounge.name}: ${lounge.image}`);
+                      (e.target as HTMLImageElement).src = getFallbackImage();
+                    }}
+                    onLoad={() => {
+                      console.log(`Image loaded successfully for ${lounge.name}: ${lounge.image}`);
                     }}
                   />
                   <div className="absolute top-3 right-3">

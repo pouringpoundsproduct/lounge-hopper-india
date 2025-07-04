@@ -27,6 +27,11 @@ const LoungePage: React.FC<LoungePageProps> = ({ lounge, onBack }) => {
     return <IconComponent className="w-5 h-5" />;
   };
 
+  // Helper function to get a fallback image
+  const getFallbackImage = () => {
+    return 'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800&h=400&fit=crop';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-amber-50">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
@@ -55,7 +60,11 @@ const LoungePage: React.FC<LoungePageProps> = ({ lounge, onBack }) => {
             alt={lounge.name}
             className="w-full h-full object-cover"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = '/src/assets/lounge-default.jpg';
+              console.log(`Hero image failed to load for ${lounge.name}: ${lounge.image}`);
+              (e.target as HTMLImageElement).src = getFallbackImage();
+            }}
+            onLoad={() => {
+              console.log(`Hero image loaded successfully for ${lounge.name}: ${lounge.image}`);
             }}
           />
           <div className="absolute top-4 right-4">
