@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ArrowLeft, MapPin, Clock, Users, Wifi, Coffee, Car, Utensils, Bath, Baby, Star, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,7 @@ const LoungePage: React.FC<LoungePageProps> = ({ lounge, onBack }) => {
 
   // Helper function to get a fallback image
   const getFallbackImage = () => {
-    return 'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800&h=400&fit=crop';
+    return '/lovable-uploads/e54585c7-7f5f-4ac5-9085-1e462e89b9e2.png';
   };
 
   return (

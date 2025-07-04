@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, MapPin, Clock, Star, CreditCard, Plane, Network } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,7 +39,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
 
   // Helper function to get a fallback image
   const getFallbackImage = () => {
-    return 'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=400&h=250&fit=crop';
+    return '/lovable-uploads/e54585c7-7f5f-4ac5-9085-1e462e89b9e2.png';
   };
 
   const getResultsTitle = () => {

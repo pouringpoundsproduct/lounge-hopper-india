@@ -54,17 +54,9 @@ export const fetchLoungeData = async (): Promise<LoungeFetchResult> => {
     const eligibleCards = loungeRelations.map((rel: any) => rel.card_name || 'Unknown Card');
     const networks = [...new Set(loungeRelations.map((rel: any) => rel.network).filter(Boolean))];
 
-    // Better image handling - use placeholder image from Unsplash for lounges
+    // Use the uploaded lounge image as default
     const getDefaultLoungeImage = () => {
-      const imageIds = [
-        'photo-1540541338287-41700207dee6', // Airport lounge
-        'photo-1578662996442-48f60103fc96', // Modern lounge
-        'photo-1571896349842-33c89424de2d', // Business lounge
-        'photo-1566073771259-6a8506099945', // Luxury lounge
-        'photo-1571019613454-1cb2f99b2d8b'  // Airport interior
-      ];
-      const randomId = imageIds[Math.floor(Math.random() * imageIds.length)];
-      return `https://images.unsplash.com/${randomId}?w=400&h=250&fit=crop`;
+      return '/lovable-uploads/e54585c7-7f5f-4ac5-9085-1e462e89b9e2.png';
     };
 
     const imageUrl = lounge['Lounge Photos'] && 
