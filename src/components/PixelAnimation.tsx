@@ -11,6 +11,10 @@ interface Pixel {
   direction: number;
   pulse: number;
   pulseSpeed: number;
+  targetX: number;
+  targetY: number;
+  life: number;
+  maxLife: number;
 }
 
 interface PixelAnimationProps {
@@ -22,8 +26,8 @@ interface PixelAnimationProps {
 
 const PixelAnimation: React.FC<PixelAnimationProps> = ({
   className = '',
-  pixelCount = 50,
-  colors = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#f97316'],
+  pixelCount = 100,
+  colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'],
   enableInteraction = true
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -47,16 +51,21 @@ const PixelAnimation: React.FC<PixelAnimationProps> = ({
     const initializePixels = () => {
       pixelsRef.current = [];
       for (let i = 0; i < pixelCount; i++) {
+        const life = Math.random() * 300 + 100;
         pixelsRef.current.push({
           x: Math.random() * canvas.offsetWidth,
           y: Math.random() * canvas.offsetHeight,
-          size: Math.random() * 4 + 2,
+          size: Math.random() * 6 + 2,
           color: colors[Math.floor(Math.random() * colors.length)],
           opacity: Math.random() * 0.8 + 0.2,
-          speed: Math.random() * 0.5 + 0.1,
+          speed: Math.random() * 1 + 0.2,
           direction: Math.random() * Math.PI * 2,
           pulse: 0,
-          pulseSpeed: Math.random() * 0.02 + 0.01
+          pulseSpeed: Math.random() * 0.03 + 0.01,
+          targetX: Math.random() * canvas.offsetWidth,
+          targetY: Math.random() * canvas.offsetHeight,
+          life: life,
+          maxLife: life
         });
       }
     };
@@ -64,75 +73,109 @@ const PixelAnimation: React.FC<PixelAnimationProps> = ({
     const drawPixel = (pixel: Pixel) => {
       ctx.save();
       
-      // Calculate pulsing effect
-      const pulseScale = 1 + Math.sin(pixel.pulse) * 0.3;
-      const currentSize = pixel.size * pulseScale;
+      // Calculate pulsing and life-based effects
+      const pulseScale = 1 + Math.sin(pixel.pulse) * 0.5;
+      const lifeRatio = pixel.life / pixel.maxLife;
+      const currentSize = pixel.size * pulseScale * lifeRatio;
+      const currentOpacity = pixel.opacity * lifeRatio;
       
-      // Create gradient for each pixel
+      // Create multiple layers for glow effect
       const gradient = ctx.createRadialGradient(
         pixel.x, pixel.y, 0,
-        pixel.x, pixel.y, currentSize
+        pixel.x, pixel.y, currentSize * 3
       );
-      gradient.addColorStop(0, pixel.color + Math.floor(pixel.opacity * 255).toString(16).padStart(2, '0'));
+      
+      const alpha = Math.floor(currentOpacity * 255).toString(16).padStart(2, '0');
+      gradient.addColorStop(0, pixel.color + alpha);
+      gradient.addColorStop(0.3, pixel.color + Math.floor(currentOpacity * 128).toString(16).padStart(2, '0'));
       gradient.addColorStop(1, pixel.color + '00');
       
-      // Draw pixel with glow effect
+      // Draw outer glow
       ctx.globalCompositeOperation = 'screen';
       ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(pixel.x, pixel.y, currentSize * 3, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw main pixel with enhanced glow
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = pixel.color + alpha;
+      ctx.shadowColor = pixel.color;
+      ctx.shadowBlur = currentSize * 2;
       ctx.beginPath();
       ctx.arc(pixel.x, pixel.y, currentSize, 0, Math.PI * 2);
       ctx.fill();
       
-      // Add core pixel
+      // Draw core
       ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = pixel.color + Math.floor(pixel.opacity * 255).toString(16).padStart(2, '0');
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = pixel.color + 'ff';
       ctx.beginPath();
-      ctx.arc(pixel.x, pixel.y, pixel.size * 0.3, 0, Math.PI * 2);
+      ctx.arc(pixel.x, pixel.y, currentSize * 0.4, 0, Math.PI * 2);
       ctx.fill();
       
       ctx.restore();
     };
 
     const updatePixel = (pixel: Pixel) => {
-      // Update position
-      pixel.x += Math.cos(pixel.direction) * pixel.speed;
-      pixel.y += Math.sin(pixel.direction) * pixel.speed;
+      // Update life
+      pixel.life -= 0.5;
+      
+      // Respawn pixel when life ends
+      if (pixel.life <= 0) {
+        pixel.x = Math.random() * canvas.offsetWidth;
+        pixel.y = Math.random() * canvas.offsetHeight;
+        pixel.life = pixel.maxLife;
+        pixel.targetX = Math.random() * canvas.offsetWidth;
+        pixel.targetY = Math.random() * canvas.offsetHeight;
+        pixel.color = colors[Math.floor(Math.random() * colors.length)];
+      }
+      
+      // Move towards target with some randomness
+      const dx = pixel.targetX - pixel.x;
+      const dy = pixel.targetY - pixel.y;
+      pixel.x += dx * 0.005 + Math.cos(pixel.direction) * pixel.speed;
+      pixel.y += dy * 0.005 + Math.sin(pixel.direction) * pixel.speed;
       
       // Update pulse
       pixel.pulse += pixel.pulseSpeed;
       
-      // Mouse interaction
+      // Mouse interaction with stronger effect
       if (enableInteraction) {
-        const dx = mouseRef.current.x - pixel.x;
-        const dy = mouseRef.current.y - pixel.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const mouseDx = mouseRef.current.x - pixel.x;
+        const mouseDy = mouseRef.current.y - pixel.y;
+        const mouseDistance = Math.sqrt(mouseDx * mouseDx + mouseDy * mouseDy);
         
-        if (distance < 100) {
-          const force = (100 - distance) / 100;
-          pixel.x -= (dx / distance) * force * 2;
-          pixel.y -= (dy / distance) * force * 2;
-          pixel.opacity = Math.min(1, pixel.opacity + force * 0.5);
-          pixel.size = Math.min(8, pixel.size + force);
+        if (mouseDistance < 150) {
+          const force = (150 - mouseDistance) / 150;
+          pixel.x -= (mouseDx / mouseDistance) * force * 3;
+          pixel.y -= (mouseDy / mouseDistance) * force * 3;
+          pixel.opacity = Math.min(1, pixel.opacity + force * 0.8);
+          pixel.size = Math.min(12, pixel.size + force * 2);
         } else {
-          pixel.opacity = Math.max(0.2, pixel.opacity - 0.01);
-          pixel.size = Math.max(2, pixel.size - 0.02);
+          pixel.opacity = Math.max(0.2, pixel.opacity - 0.005);
+          pixel.size = Math.max(2, pixel.size - 0.01);
         }
       }
       
-      // Boundary check and wrap around
-      if (pixel.x < -10) pixel.x = canvas.offsetWidth + 10;
-      if (pixel.x > canvas.offsetWidth + 10) pixel.x = -10;
-      if (pixel.y < -10) pixel.y = canvas.offsetHeight + 10;
-      if (pixel.y > canvas.offsetHeight + 10) pixel.y = -10;
+      // Boundary wrapping
+      if (pixel.x < -20) pixel.x = canvas.offsetWidth + 20;
+      if (pixel.x > canvas.offsetWidth + 20) pixel.x = -20;
+      if (pixel.y < -20) pixel.y = canvas.offsetHeight + 20;
+      if (pixel.y > canvas.offsetHeight + 20) pixel.y = -20;
       
-      // Occasionally change direction
-      if (Math.random() < 0.002) {
-        pixel.direction += (Math.random() - 0.5) * 0.5;
+      // Occasionally change direction and target
+      if (Math.random() < 0.005) {
+        pixel.direction += (Math.random() - 0.5) * 1;
+        pixel.targetX = Math.random() * canvas.offsetWidth;
+        pixel.targetY = Math.random() * canvas.offsetHeight;
       }
     };
 
     const animate = () => {
-      ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
+      // Clear with slight trails for smoother effect
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
       
       pixelsRef.current.forEach(pixel => {
         updatePixel(pixel);
@@ -178,11 +221,12 @@ const PixelAnimation: React.FC<PixelAnimationProps> = ({
   return (
     <canvas
       ref={canvasRef}
-      className={`pointer-events-none absolute inset-0 ${className}`}
+      className={`absolute inset-0 ${className}`}
       style={{
         width: '100%',
         height: '100%',
-        zIndex: 1
+        zIndex: 1,
+        pointerEvents: enableInteraction ? 'auto' : 'none'
       }}
     />
   );
