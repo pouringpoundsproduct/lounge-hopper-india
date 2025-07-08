@@ -1,20 +1,18 @@
-
 import React, { useEffect, useRef } from 'react';
 
-interface Pixel {
+interface Particle {
   x: number;
   y: number;
+  targetX: number;
+  targetY: number;
   size: number;
   color: string;
   opacity: number;
   speed: number;
-  direction: number;
-  pulse: number;
-  pulseSpeed: number;
-  targetX: number;
-  targetY: number;
+  angle: number;
   life: number;
   maxLife: number;
+  type: 'dot' | 'plane' | 'sparkle';
 }
 
 interface PixelAnimationProps {
@@ -26,12 +24,12 @@ interface PixelAnimationProps {
 
 const PixelAnimation: React.FC<PixelAnimationProps> = ({
   className = '',
-  pixelCount = 100,
-  colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'],
+  pixelCount = 80,
+  colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
   enableInteraction = true
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const pixelsRef = useRef<Pixel[]>([]);
+  const particlesRef = useRef<Particle[]>([]);
   const mouseRef = useRef({ x: 0, y: 0 });
   const animationRef = useRef<number>();
 
@@ -46,140 +44,122 @@ const PixelAnimation: React.FC<PixelAnimationProps> = ({
       canvas.width = canvas.offsetWidth * window.devicePixelRatio;
       canvas.height = canvas.offsetHeight * window.devicePixelRatio;
       ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      canvas.style.width = canvas.offsetWidth + 'px';
+      canvas.style.height = canvas.offsetHeight + 'px';
     };
 
-    const initializePixels = () => {
-      pixelsRef.current = [];
+    const initializeParticles = () => {
+      particlesRef.current = [];
       for (let i = 0; i < pixelCount; i++) {
-        const life = Math.random() * 300 + 100;
-        pixelsRef.current.push({
+        const types: ('dot' | 'plane' | 'sparkle')[] = ['dot', 'plane', 'sparkle'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        
+        particlesRef.current.push({
           x: Math.random() * canvas.offsetWidth,
           y: Math.random() * canvas.offsetHeight,
-          size: Math.random() * 6 + 2,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          opacity: Math.random() * 0.8 + 0.2,
-          speed: Math.random() * 1 + 0.2,
-          direction: Math.random() * Math.PI * 2,
-          pulse: 0,
-          pulseSpeed: Math.random() * 0.03 + 0.01,
           targetX: Math.random() * canvas.offsetWidth,
           targetY: Math.random() * canvas.offsetHeight,
-          life: life,
-          maxLife: life
+          size: type === 'plane' ? 4 : Math.random() * 3 + 1,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          opacity: Math.random() * 0.6 + 0.2,
+          speed: Math.random() * 0.5 + 0.1,
+          angle: Math.random() * Math.PI * 2,
+          life: Math.random() * 500 + 200,
+          maxLife: Math.random() * 500 + 200,
+          type
         });
       }
     };
 
-    const drawPixel = (pixel: Pixel) => {
+    const drawParticle = (particle: Particle) => {
       ctx.save();
       
-      // Calculate pulsing and life-based effects
-      const pulseScale = 1 + Math.sin(pixel.pulse) * 0.5;
-      const lifeRatio = pixel.life / pixel.maxLife;
-      const currentSize = pixel.size * pulseScale * lifeRatio;
-      const currentOpacity = pixel.opacity * lifeRatio;
+      const alpha = (particle.opacity * (particle.life / particle.maxLife) * 255).toString(16).padStart(2, '0');
       
-      // Create multiple layers for glow effect
-      const gradient = ctx.createRadialGradient(
-        pixel.x, pixel.y, 0,
-        pixel.x, pixel.y, currentSize * 3
-      );
-      
-      const alpha = Math.floor(currentOpacity * 255).toString(16).padStart(2, '0');
-      gradient.addColorStop(0, pixel.color + alpha);
-      gradient.addColorStop(0.3, pixel.color + Math.floor(currentOpacity * 128).toString(16).padStart(2, '0'));
-      gradient.addColorStop(1, pixel.color + '00');
-      
-      // Draw outer glow
-      ctx.globalCompositeOperation = 'screen';
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(pixel.x, pixel.y, currentSize * 3, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Draw main pixel with enhanced glow
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.fillStyle = pixel.color + alpha;
-      ctx.shadowColor = pixel.color;
-      ctx.shadowBlur = currentSize * 2;
-      ctx.beginPath();
-      ctx.arc(pixel.x, pixel.y, currentSize, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Draw core
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = pixel.color + 'ff';
-      ctx.beginPath();
-      ctx.arc(pixel.x, pixel.y, currentSize * 0.4, 0, Math.PI * 2);
-      ctx.fill();
+      if (particle.type === 'plane') {
+        // Draw simple plane shape
+        ctx.fillStyle = particle.color + alpha;
+        ctx.translate(particle.x, particle.y);
+        ctx.rotate(particle.angle);
+        ctx.fillRect(-particle.size, -1, particle.size * 2, 2);
+        ctx.fillRect(-1, -particle.size/2, 2, particle.size);
+      } else if (particle.type === 'sparkle') {
+        // Draw sparkle/star shape
+        ctx.fillStyle = particle.color + alpha;
+        ctx.translate(particle.x, particle.y);
+        ctx.rotate(particle.angle);
+        for (let i = 0; i < 4; i++) {
+          ctx.fillRect(-particle.size/2, -0.5, particle.size, 1);
+          ctx.rotate(Math.PI / 4);
+        }
+      } else {
+        // Draw simple dot
+        ctx.fillStyle = particle.color + alpha;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
       
       ctx.restore();
     };
 
-    const updatePixel = (pixel: Pixel) => {
-      // Update life
-      pixel.life -= 0.5;
+    const updateParticle = (particle: Particle) => {
+      // Gentle movement towards target
+      const dx = particle.targetX - particle.x;
+      const dy = particle.targetY - particle.y;
+      particle.x += dx * 0.01 + Math.cos(particle.angle) * particle.speed;
+      particle.y += dy * 0.01 + Math.sin(particle.angle) * particle.speed;
       
-      // Respawn pixel when life ends
-      if (pixel.life <= 0) {
-        pixel.x = Math.random() * canvas.offsetWidth;
-        pixel.y = Math.random() * canvas.offsetHeight;
-        pixel.life = pixel.maxLife;
-        pixel.targetX = Math.random() * canvas.offsetWidth;
-        pixel.targetY = Math.random() * canvas.offsetHeight;
-        pixel.color = colors[Math.floor(Math.random() * colors.length)];
+      // Slow rotation for planes and sparkles
+      if (particle.type !== 'dot') {
+        particle.angle += 0.01;
       }
       
-      // Move towards target with some randomness
-      const dx = pixel.targetX - pixel.x;
-      const dy = pixel.targetY - pixel.y;
-      pixel.x += dx * 0.005 + Math.cos(pixel.direction) * pixel.speed;
-      pixel.y += dy * 0.005 + Math.sin(pixel.direction) * pixel.speed;
+      // Life cycle
+      particle.life -= 0.5;
+      if (particle.life <= 0) {
+        particle.x = Math.random() * canvas.offsetWidth;
+        particle.y = Math.random() * canvas.offsetHeight;
+        particle.targetX = Math.random() * canvas.offsetWidth;
+        particle.targetY = Math.random() * canvas.offsetHeight;
+        particle.life = particle.maxLife;
+        particle.color = colors[Math.floor(Math.random() * colors.length)];
+      }
       
-      // Update pulse
-      pixel.pulse += pixel.pulseSpeed;
-      
-      // Mouse interaction with stronger effect
+      // Mouse interaction (very subtle)
       if (enableInteraction) {
-        const mouseDx = mouseRef.current.x - pixel.x;
-        const mouseDy = mouseRef.current.y - pixel.y;
-        const mouseDistance = Math.sqrt(mouseDx * mouseDx + mouseDy * mouseDy);
+        const mouseDx = mouseRef.current.x - particle.x;
+        const mouseDy = mouseRef.current.y - particle.y;
+        const distance = Math.sqrt(mouseDx * mouseDx + mouseDy * mouseDy);
         
-        if (mouseDistance < 150) {
-          const force = (150 - mouseDistance) / 150;
-          pixel.x -= (mouseDx / mouseDistance) * force * 3;
-          pixel.y -= (mouseDy / mouseDistance) * force * 3;
-          pixel.opacity = Math.min(1, pixel.opacity + force * 0.8);
-          pixel.size = Math.min(12, pixel.size + force * 2);
-        } else {
-          pixel.opacity = Math.max(0.2, pixel.opacity - 0.005);
-          pixel.size = Math.max(2, pixel.size - 0.01);
+        if (distance < 100) {
+          const force = (100 - distance) / 100 * 0.5;
+          particle.x -= (mouseDx / distance) * force;
+          particle.y -= (mouseDy / distance) * force;
         }
       }
       
-      // Boundary wrapping
-      if (pixel.x < -20) pixel.x = canvas.offsetWidth + 20;
-      if (pixel.x > canvas.offsetWidth + 20) pixel.x = -20;
-      if (pixel.y < -20) pixel.y = canvas.offsetHeight + 20;
-      if (pixel.y > canvas.offsetHeight + 20) pixel.y = -20;
+      // Keep particles within bounds
+      if (particle.x < 0) particle.x = canvas.offsetWidth;
+      if (particle.x > canvas.offsetWidth) particle.x = 0;
+      if (particle.y < 0) particle.y = canvas.offsetHeight;
+      if (particle.y > canvas.offsetHeight) particle.y = 0;
       
-      // Occasionally change direction and target
-      if (Math.random() < 0.005) {
-        pixel.direction += (Math.random() - 0.5) * 1;
-        pixel.targetX = Math.random() * canvas.offsetWidth;
-        pixel.targetY = Math.random() * canvas.offsetHeight;
+      // Occasionally change target
+      if (Math.random() < 0.002) {
+        particle.targetX = Math.random() * canvas.offsetWidth;
+        particle.targetY = Math.random() * canvas.offsetHeight;
       }
     };
 
     const animate = () => {
-      // Clear with slight trails for smoother effect
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      // Clear canvas with slight fade effect
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.02)';
       ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
       
-      pixelsRef.current.forEach(pixel => {
-        updatePixel(pixel);
-        drawPixel(pixel);
+      particlesRef.current.forEach(particle => {
+        updateParticle(particle);
+        drawParticle(particle);
       });
       
       animationRef.current = requestAnimationFrame(animate);
@@ -193,15 +173,13 @@ const PixelAnimation: React.FC<PixelAnimationProps> = ({
 
     const handleResize = () => {
       resizeCanvas();
-      initializePixels();
+      initializeParticles();
     };
 
-    // Initialize
     resizeCanvas();
-    initializePixels();
+    initializeParticles();
     animate();
 
-    // Event listeners
     if (enableInteraction) {
       canvas.addEventListener('mousemove', handleMouseMove);
     }
